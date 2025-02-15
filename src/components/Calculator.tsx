@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Select } from './Select';
 
 interface CalculatorProps {
@@ -7,6 +7,37 @@ interface CalculatorProps {
     containerType: 'ampoule' | 'vial';
     materialType?: 'plastic' | 'glass';
   };
+  onAddInspection: (inspection: {
+    name: string;
+    type: {
+      productType: 'semi-finished' | 'finished';
+      containerType: 'ampoule' | 'vial';
+      materialType?: 'plastic' | 'glass';
+    };
+    batchSize: number;
+    volume?: string;
+    boxSize?: string;
+    collectiveBoxSize?: string;
+    results: {
+      aqlCount: number;
+      inspectionQuantity: string;
+      periodicity: number;
+      intervals: Array<{
+        start: number;
+        end: number;
+      }>;
+      defects: {
+        critical: number;
+        major: number;
+        minor: number;
+      };
+      pharmacotheque?: {
+        totalSamples: string;
+        quantityIMF: string;
+        boxQuantity: string;
+      };
+    };
+  }) => void;
 }
 
 interface CalculationResult {
@@ -29,7 +60,6 @@ interface CalculationResult {
   };
 }
 
-// Volumes disponíveis por tipo de recipiente e material
 const VOLUMES = {
   ampoule: {
     plastic: [
@@ -60,8 +90,7 @@ const VOLUMES = {
   }
 };
 
-// Tamanhos de caixa por tipo de recipiente e material
-const BOX_SIZES: Record<'ampoule' | 'vial', Record<'plastic' | 'glass', { value: string; label: string }[]>> = {
+const BOX_SIZES = {
   ampoule: {
     glass: [
       { value: "1", label: "1 ampola" },
@@ -72,21 +101,18 @@ const BOX_SIZES: Record<'ampoule' | 'vial', Record<'plastic' | 'glass', { value:
       { value: "60", label: "60 ampolas" },
       { value: "100", label: "100 ampolas" },
       { value: "NA", label: "NA - Manual" }
-    ],
-    plastic: []
+    ]
   },
   vial: {
     glass: [
       { value: "10", label: "10 frascos" },
       { value: "25", label: "25 frascos" },
       { value: "50", label: "50 frascos" }
-    ],
-    plastic: []
+    ]
   }
 };
 
-// Tabelas de farmacoteca
-const PHARMACOTHEQUE: Record<string, any> = {
+const PHARMACOTHEQUE = {
   plastic_vial: {
     "1000mL": ["4 frascos", "1 + 2 + 1 frascos", ""],
     "500mL": ["4 frascos", "1 + 2 + 1 frascos", ""],
@@ -135,20 +161,12 @@ const PHARMACOTHEQUE: Record<string, any> = {
   }
 };
 
-export function Calculator({ type }: CalculatorProps) {
+export function Calculator({ type, onAddInspection }: CalculatorProps) {
+  const [inspectionName, setInspectionName] = useState('');
   const [batchSize, setBatchSize] = useState('');
   const [volume, setVolume] = useState('');
   const [boxSize, setBoxSize] = useState('');
   const [collectiveBoxSize, setCollectiveBoxSize] = useState('');
-  const [results, setResults] = useState<CalculationResult | null>(null);
-
-  const getTitle = () => {
-    const productName = type.productType === 'semi-finished' ? 'Semi-Acabado' : 'Acabado';
-    const containerName = type.containerType === 'ampoule' ? 'Ampolas' : 'Frascos';
-    const materialName = type.materialType ? (type.materialType === 'plastic' ? 'PE' : 'VD') : '';
-    
-    return `${productName} - ${containerName}${materialName ? ` ${materialName}` : ''}`;
-  };
 
   const calculateS4Defects = (size: number) => {
     if (size <= 90) return { critical: 0, major: 0, minor: 0 };
@@ -198,7 +216,12 @@ export function Calculator({ type }: CalculatorProps) {
     return intervals;
   };
 
-  const calculateAQL = () => {
+  const handleCalculate = () => {
+    if (!inspectionName) {
+      alert('Por favor, nomeie a inspeção');
+      return;
+    }
+
     if (!batchSize) {
       alert('Por favor, preencha o tamanho do lote');
       return;
@@ -208,10 +231,8 @@ export function Calculator({ type }: CalculatorProps) {
     let aqlCount = 3;
     let inspectionQuantity = "";
 
-    // Cálculos específicos baseados no tipo de produto
     if (type.productType === 'finished') {
       if (type.materialType === 'glass') {
-        // Especial S-4 para vidro
         if (size <= 35000) {
           inspectionQuantity = "20, 10, 20 (Total: 50)";
         } else if (size <= 500000) {
@@ -220,7 +241,6 @@ export function Calculator({ type }: CalculatorProps) {
           inspectionQuantity = "50, 25, 50 (Total: 125)";
         }
       } else if (type.containerType === 'ampoule') {
-        // Ampolas PE
         if (size <= 35000) {
           aqlCount = 3;
           inspectionQuantity = "66, 66, 68 (Total: 200)";
@@ -232,7 +252,6 @@ export function Calculator({ type }: CalculatorProps) {
           inspectionQuantity = "160, 160, 160, 160, 160 (Total: 800)";
         }
       } else {
-        // Frascos PE
         if (size <= 10000) {
           aqlCount = 2;
           inspectionQuantity = "100, 100 (Total: 200)";
@@ -242,7 +261,6 @@ export function Calculator({ type }: CalculatorProps) {
         }
       }
     } else {
-      // Semi-acabado
       if (type.materialType === 'glass') {
         if (size <= 35000) {
           aqlCount = 2;
@@ -258,7 +276,6 @@ export function Calculator({ type }: CalculatorProps) {
           inspectionQuantity = "160, 160, 160, 160, 160 (Total: 800)";
         }
       } else {
-        // Normal Nível II para plástico
         if (size <= 35000) {
           aqlCount = 2;
           inspectionQuantity = "100, 100 (Total: 200)";
@@ -312,14 +329,32 @@ export function Calculator({ type }: CalculatorProps) {
       }
     }
 
-    setResults({
+    const results = {
       aqlCount,
       inspectionQuantity,
       periodicity,
       intervals: calculateIntervals(size, periodicity, aqlCount),
       defects,
       pharmacotheque
+    };
+
+    onAddInspection({
+      name: inspectionName,
+      type,
+      batchSize: size,
+      volume,
+      boxSize,
+      collectiveBoxSize,
+      results
     });
+  };
+
+  const getTitle = () => {
+    const productName = type.productType === 'semi-finished' ? 'Semi-Acabado' : 'Acabado';
+    const containerName = type.containerType === 'ampoule' ? 'Ampolas' : 'Frascos';
+    const materialName = type.materialType === 'plastic' ? 'PE' : 'VD';
+    
+    return `${productName} - ${containerName}${type.materialType ? ` ${materialName}` : ''}`;
   };
 
   const availableVolumes = type.containerType && type.materialType ? 
@@ -334,6 +369,19 @@ export function Calculator({ type }: CalculatorProps) {
       
       <div className="space-y-6">
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Nome da Inspeção
+            </label>
+            <input
+              type="text"
+              value={inspectionName}
+              onChange={(e) => setInspectionName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Digite o nome da inspeção"
+            />
+          </div>
+
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               Tamanho do Lote
@@ -382,64 +430,11 @@ export function Calculator({ type }: CalculatorProps) {
         </div>
 
         <button
-          onClick={calculateAQL}
+          onClick={handleCalculate}
           className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors"
         >
-          Calcular
+          Iniciar Inspeção
         </button>
-
-        {results && (
-          <div className="mt-8 space-y-6 border-t pt-6">
-            <h2 className="text-xl font-semibold text-gray-900">Resultados</h2>
-            
-            <div className="grid gap-4">
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="font-medium text-gray-900">Informações do AQL</h3>
-                <div className="mt-2 space-y-2 text-sm text-gray-600">
-                  <p>Quantidade de AQLs: {results.aqlCount}</p>
-                  <p>Quantidade a Inspecionar: {results.inspectionQuantity}</p>
-                  <p>Periodicidade: {Math.round(results.periodicity)}</p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="font-medium text-gray-900">Intervalos</h3>
-                <div className="mt-2 space-y-1 text-sm text-gray-600">
-                  {results.intervals.map((interval, index) => (
-                    <p key={index}>
-                      AQL {index + 1}: {interval.start} até {interval.end}
-                      {collectiveBoxSize && (
-                        <span className="block text-gray-500">
-                          (da caixa {Math.ceil(interval.start/parseInt(collectiveBoxSize))} até a caixa {Math.ceil(interval.end/parseInt(collectiveBoxSize))})
-                        </span>
-                      )}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="font-medium text-gray-900">Defeitos Aceitáveis</h3>
-                <div className="mt-2 space-y-1 text-sm text-gray-600">
-                  <p>Críticos: {results.defects.critical}</p>
-                  <p>Maiores: {results.defects.major}</p>
-                  <p>Menores: {results.defects.minor}</p>
-                </div>
-              </div>
-
-              {results.pharmacotheque && (
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <h3 className="font-medium text-gray-900">Farmacoteca</h3>
-                  <div className="mt-2 space-y-1 text-sm text-gray-600">
-                    <p>Total de Amostras: {results.pharmacotheque.totalSamples}</p>
-                    <p>Quantidade (I/M/F): {results.pharmacotheque.quantityIMF}</p>
-                    <p>Quantidade de Caixas: {results.pharmacotheque.boxQuantity}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
