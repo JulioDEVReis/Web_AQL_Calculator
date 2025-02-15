@@ -74,9 +74,7 @@ export function Dashboard({ inspections, onFinishInspection }: DashboardProps) {
                 <div className="text-sm text-gray-600">
                   <p>Tamanho do Lote: {inspection.batchSize}</p>
                   {inspection.volume && <p>Volume: {inspection.volume}</p>}
-                  }
                   {inspection.boxSize && <p>Tamanho da Caixa: {inspection.boxSize}</p>}
-                  }
                   {inspection.collectiveBoxSize && (
                     <p>Quantidade por Caixa Coletiva: {inspection.collectiveBoxSize}</p>
                   )}
