@@ -13,6 +13,7 @@ interface CalculatorProps {
       productType: 'semi-finished' | 'finished';
       containerType: 'ampoule' | 'vial';
       materialType?: 'plastic' | 'glass';
+      inspectionType: 'normal' | 'tight' | 'special-s4';
     };
     batchSize: number;
     volume?: string;
@@ -38,26 +39,6 @@ interface CalculatorProps {
       };
     };
   }) => void;
-}
-
-interface CalculationResult {
-  aqlCount: number;
-  inspectionQuantity: string;
-  periodicity: number;
-  intervals: Array<{
-    start: number;
-    end: number;
-  }>;
-  defects: {
-    critical: number;
-    major: number;
-    minor: number;
-  };
-  pharmacotheque?: {
-    totalSamples: string;
-    quantityIMF: string;
-    boxQuantity: string;
-  };
 }
 
 const VOLUMES = {
@@ -167,6 +148,93 @@ export function Calculator({ type, onAddInspection }: CalculatorProps) {
   const [volume, setVolume] = useState('');
   const [boxSize, setBoxSize] = useState('');
   const [collectiveBoxSize, setCollectiveBoxSize] = useState('');
+  const [inspectionType, setInspectionType] = useState<'normal' | 'tight' | 'special-s4'>('normal');
+
+  const getAvailableInspectionTypes = () => {
+    if (type.productType === 'finished' && type.materialType === 'glass') {
+      return [
+        { value: 'special-s4', label: 'Especial S-4' }
+      ];
+    }
+    
+    if (type.productType === 'finished' && type.containerType === 'vial' && type.materialType === 'plastic') {
+      return [
+        { value: 'normal', label: 'Normal Nível II' },
+        { value: 'tight', label: 'Apertada Nível II' }
+      ];
+    }
+    
+    return [
+      { value: 'normal', label: 'Normal Nível II' }
+    ];
+  };
+
+  const calculateAQLCount = (size: number) => {
+    // Semi-finished products - Glass ampoules/vials
+    if (type.productType === 'semi-finished' && (type.materialType === 'glass' || type.containerType === 'ampoule')) {
+      if (size <= 35000) return 2;
+      if (size <= 70000) return 2;
+      if (size <= 150000) return 3;
+      return 5;
+    }
+    
+    // Finished products - Glass ampoules/vials
+    if (type.productType === 'finished' && type.materialType === 'glass') {
+      return 3; // Always 3 for glass finished products
+    }
+    
+    // Finished products - Plastic ampoules
+    if (type.productType === 'finished' && type.containerType === 'ampoule' && type.materialType === 'plastic') {
+      if (size <= 35000) return 3;
+      if (size <= 150000) return 3;
+      return 5;
+    }
+    
+    // Finished products - Plastic vials
+    if (type.productType === 'finished' && type.containerType === 'vial' && type.materialType === 'plastic') {
+      if (size <= 10000) return 2;
+      if (size <= 35000) return 3;
+    }
+    
+    return 3; // Default case
+  };
+
+  const calculateInspectionQuantity = (size: number) => {
+    // Finished products - Glass ampoules/vials
+    if (type.productType === 'finished' && type.materialType === 'glass') {
+      if (size <= 35000) return "20, 10, 20 (Total: 50)";
+      if (size <= 500000) return "30, 20, 30 (Total: 80)";
+      if (size <= 1000000) return "50, 25, 50 (Total: 125)";
+    }
+    
+    // Finished products - Plastic ampoules
+    if (type.productType === 'finished' && type.containerType === 'ampoule' && type.materialType === 'plastic') {
+      if (size <= 35000) return "66, 66, 68 (Total: 200)";
+      if (size <= 150000) return "300, 200, 300 (Total: 800)";
+      return "160, 160, 160, 160, 160 (Total: 800)";
+    }
+    
+    // Finished products - Plastic vials (Normal Level II)
+    if (type.productType === 'finished' && type.containerType === 'vial' && type.materialType === 'plastic' && inspectionType === 'normal') {
+      if (size <= 10000) return "100, 100 (Total: 200)";
+      if (size <= 35000) return "66, 66, 68 (Total: 200)";
+    }
+    
+    // Finished products - Plastic vials (Tight Level II)
+    if (type.productType === 'finished' && type.containerType === 'vial' && type.materialType === 'plastic' && inspectionType === 'tight') {
+      return "157, 158 (Total: 315)";
+    }
+    
+    // Semi-finished products - Glass ampoules/vials
+    if (type.productType === 'semi-finished' && (type.materialType === 'glass' || type.containerType === 'ampoule')) {
+      if (size <= 35000) return "100, 100 (Total: 200)";
+      if (size <= 70000) return "400, 400 (Total: 800)";
+      if (size <= 150000) return "300, 200, 300 (Total: 800)";
+      return "160, 160, 160, 160, 160 (Total: 800)";
+    }
+    
+    return "";
+  };
 
   const calculateS4Defects = (size: number) => {
     if (size <= 90) return { critical: 0, major: 0, minor: 0 };
@@ -193,9 +261,8 @@ export function Calculator({ type, onAddInspection }: CalculatorProps) {
     return { critical: 0, major: 14, minor: 21 };
   };
 
-  const calculateTightLevelIIDefects = (size: number) => {
-    if (size === 4800) return { critical: 0, major: 2, minor: 12 };
-    return calculateNormalLevelIIDefects(size);
+  const calculateTightLevelIIDefects = () => {
+    return { critical: 0, major: 2, minor: 12 };
   };
 
   const calculateIntervals = (size: number, periodicity: number, aqlCount: number) => {
@@ -228,71 +295,21 @@ export function Calculator({ type, onAddInspection }: CalculatorProps) {
     }
 
     const size = parseInt(batchSize);
-    let aqlCount = 3;
-    let inspectionQuantity = "";
-
-    if (type.productType === 'finished') {
-      if (type.materialType === 'glass') {
-        if (size <= 35000) {
-          inspectionQuantity = "20, 10, 20 (Total: 50)";
-        } else if (size <= 500000) {
-          inspectionQuantity = "30, 20, 30 (Total: 80)";
-        } else if (size <= 1000000) {
-          inspectionQuantity = "50, 25, 50 (Total: 125)";
-        }
-      } else if (type.containerType === 'ampoule') {
-        if (size <= 35000) {
-          aqlCount = 3;
-          inspectionQuantity = "66, 66, 68 (Total: 200)";
-        } else if (size <= 150000) {
-          aqlCount = 3;
-          inspectionQuantity = "300, 200, 300 (Total: 800)";
-        } else {
-          aqlCount = 5;
-          inspectionQuantity = "160, 160, 160, 160, 160 (Total: 800)";
-        }
-      } else {
-        if (size <= 10000) {
-          aqlCount = 2;
-          inspectionQuantity = "100, 100 (Total: 200)";
-        } else if (size <= 35000) {
-          aqlCount = 3;
-          inspectionQuantity = "66, 66, 68 (Total: 200)";
-        }
-      }
+    const aqlCount = calculateAQLCount(size);
+    const inspectionQuantity = calculateInspectionQuantity(size);
+    
+    let periodicity;
+    if (inspectionType === 'tight') {
+      periodicity = 4800;
     } else {
-      if (type.materialType === 'glass') {
-        if (size <= 35000) {
-          aqlCount = 2;
-          inspectionQuantity = "100, 100 (Total: 200)";
-        } else if (size <= 70000) {
-          aqlCount = 2;
-          inspectionQuantity = "400, 400 (Total: 800)";
-        } else if (size <= 150000) {
-          aqlCount = 3;
-          inspectionQuantity = "300, 200, 300 (Total: 800)";
-        } else {
-          aqlCount = 5;
-          inspectionQuantity = "160, 160, 160, 160, 160 (Total: 800)";
-        }
-      } else {
-        if (size <= 35000) {
-          aqlCount = 2;
-          inspectionQuantity = "100, 100 (Total: 200)";
-        } else {
-          aqlCount = 3;
-          inspectionQuantity = "66, 66, 68 (Total: 200)";
-        }
-      }
+      periodicity = size / (aqlCount - 1);
     }
 
-    const periodicity = size / (aqlCount - 1);
     let defects;
-    
-    if (type.materialType === 'glass' && type.productType === 'finished') {
+    if (inspectionType === 'special-s4') {
       defects = calculateS4Defects(size);
-    } else if (type.containerType === 'vial' && type.materialType === 'plastic' && size === 4800) {
-      defects = calculateTightLevelIIDefects(size);
+    } else if (inspectionType === 'tight') {
+      defects = calculateTightLevelIIDefects();
     } else {
       defects = calculateNormalLevelIIDefects(size);
     }
@@ -340,7 +357,10 @@ export function Calculator({ type, onAddInspection }: CalculatorProps) {
 
     onAddInspection({
       name: inspectionName,
-      type,
+      type: {
+        ...type,
+        inspectionType
+      },
       batchSize: size,
       volume,
       boxSize,
@@ -381,6 +401,13 @@ export function Calculator({ type, onAddInspection }: CalculatorProps) {
               placeholder="Digite o nome da inspeção"
             />
           </div>
+
+          <Select
+            label="Tipo de Inspeção"
+            options={getAvailableInspectionTypes()}
+            value={inspectionType}
+            onChange={(e) => setInspectionType(e.target.value as 'normal' | 'tight' | 'special-s4')}
+          />
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
