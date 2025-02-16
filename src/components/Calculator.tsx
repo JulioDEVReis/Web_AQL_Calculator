@@ -266,18 +266,49 @@ export function Calculator({ type, onAddInspection }: CalculatorProps) {
   };
 
   const calculateIntervals = (size: number, periodicity: number, aqlCount: number) => {
-    const intervals = [];
-    let start = 0;
-    let end = periodicity / 2;
-
-    for (let i = 0; i < aqlCount; i++) {
-      intervals.push({
-        start: Math.round(start),
-        end: Math.round(end)
-      });
-      start = end + 1;
-      end = start + periodicity;
-      if (end > size) end = size;
+    const intervals = [];  
+    // Para 2 AQLs
+    if (aqlCount === 2) {
+        intervals.push({
+            start: 0,
+            end: periodicity / 2
+        });
+        intervals.push({
+            start: intervals[0].end + 1,
+            end: size
+        });
+    }
+    // Para 3 AQLs
+    else if (aqlCount === 3) {
+        intervals.push({
+            start: 0,
+            end: periodicity / 2
+        });
+        intervals.push({
+            start: intervals[0].end + 1,
+            end: intervals[0].end + periodicity
+        });
+        intervals.push({
+            start: intervals[1].end + 1,
+            end: size
+        });
+    }
+    // Para 5 AQLs
+    else if (aqlCount === 5) {
+        intervals.push({
+            start: 0,
+            end: periodicity / 2
+        });
+        for (let i = 0; i < 3; i++) {
+            intervals.push({
+                start: intervals[i].end + 1,
+                end: intervals[i].end + periodicity
+            });
+        }
+        intervals.push({
+            start: intervals[3].end + 1,
+            end: size
+        });
     }
 
     return intervals;
