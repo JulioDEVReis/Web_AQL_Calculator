@@ -34,7 +34,7 @@ export function Results({ results }: ResultsProps) {
           <div className="mt-2 space-y-1 text-sm text-gray-600">
             {results.intervals.map((interval, index) => (
               <p key={index}>
-                AQL {index + 1}: {interval.start} to {interval.end}
+                AQL {index + 1}: {Math.round(interval.start)} to {Math.round(interval.end)}
               </p>
             ))}
           </div>

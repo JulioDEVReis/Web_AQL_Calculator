@@ -95,7 +95,7 @@ export function Dashboard({ inspections, onFinishInspection }: DashboardProps) {
                 <div className="text-sm text-gray-600">
                   {inspection.results.intervals.map((interval, index) => (
                     <p key={index}>
-                      AQL {index + 1}: {interval.start} até {interval.end}
+                      AQL {index + 1}: {Math.round(interval.start)} até {Math.round(interval.end)}
                       {inspection.collectiveBoxSize && (
                         <span className="block text-gray-500">
                           (da caixa {Math.ceil(interval.start/parseInt(inspection.collectiveBoxSize))} até a caixa {Math.ceil(interval.end/parseInt(inspection.collectiveBoxSize))})
