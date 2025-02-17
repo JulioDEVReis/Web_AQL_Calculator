@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, PillIcon, TestTubes, MilkIcon } from 'lucide-react';
+import { Tag, Tags, Syringe, ChevronsRight, MilkIcon } from 'lucide-react';
 
 type ProductType = 'semi-finished' | 'finished';
 type ContainerType = 'ampoule' | 'vial';
@@ -29,7 +29,7 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
           }`}
         >
           <div className="flex items-center gap-4">
-            <TestTubes className="w-8 h-8 text-indigo-600" />
+            <Tags className="w-8 h-8 text-indigo-600" />
             <div className="text-left">
               <h3 className="text-lg font-semibold text-gray-900">Produto Semi-Acabado</h3>
               <p className="text-sm text-gray-600">Inspeções AQL com amostragem Normal Nível II</p>
@@ -47,7 +47,7 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
           }`}
         >
           <div className="flex items-center gap-4">
-            <PillIcon className="w-8 h-8 text-indigo-600" />
+            <Tag className="w-8 h-8 text-indigo-600" />
             <div className="text-left">
               <h3 className="text-lg font-semibold text-gray-900">Produto Acabado</h3>
               <p className="text-sm text-gray-600">Inspeções AQL e Farmacoteca</p>
@@ -66,10 +66,10 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
               className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
             >
               <div className="flex items-center gap-3">
-                <MilkIcon className="w-6 h-6 text-indigo-600" />
+                <Syringe className="w-6 h-6 text-indigo-600" />
                 <span className="font-medium">Ampolas</span>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronsRight className="w-5 h-5 text-gray-400" />
             </button>
             
             <button
@@ -77,10 +77,10 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
               className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
             >
               <div className="flex items-center gap-3">
-                <PillIcon className="w-6 h-6 text-indigo-600" />
+                <MilkIcon className="w-6 h-6 text-indigo-600" />
                 <span className="font-medium">Frascos</span>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronsRight className="w-5 h-5 text-gray-400" />
             </button>
           </div>
         </div>
@@ -101,13 +101,13 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
               className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
             >
               <div className="flex items-center gap-3">
-                <MilkIcon className="w-6 h-6 text-indigo-600" />
+                <Syringe className="w-6 h-6 text-indigo-600" />
                 <div className="text-left">
                   <span className="font-medium block">Ampolas PE</span>
                   <span className="text-sm text-gray-600">Nível II Normal</span>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronsRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* Ampolas VD */}
@@ -120,13 +120,13 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
               className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
             >
               <div className="flex items-center gap-3">
-                <MilkIcon className="w-6 h-6 text-indigo-600" />
+                <Syringe className="w-6 h-6 text-indigo-600" />
                 <div className="text-left">
                   <span className="font-medium block">Ampolas VD</span>
                   <span className="text-sm text-gray-600">Especial S-4</span>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronsRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* Frascos PE */}
@@ -139,13 +139,13 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
               className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-indigo-200 hover:bg-gray-50"
             >
               <div className="flex items-center gap-3">
-                <PillIcon className="w-6 h-6 text-indigo-600" />
+                <MilkIcon className="w-6 h-6 text-indigo-600" />
                 <div className="text-left">
                   <span className="font-medium block">Frascos PE</span>
                   <span className="text-sm text-gray-600">Nível II Normal/Apertado</span>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronsRight className="w-5 h-5 text-gray-400" />
             </button>
 
             {/* Frascos VD */}
@@ -164,7 +164,7 @@ export function ProductTypeSelection({ onSelect }: ProductTypeSelectionProps) {
                   <span className="text-sm text-gray-600">Especial S-4</span>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronsRight className="w-5 h-5 text-gray-400" />
             </button>
           </div>
         </div>
