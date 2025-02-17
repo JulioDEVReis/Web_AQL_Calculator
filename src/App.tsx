@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calculator as CalculatorIcon } from 'lucide-react';
 import { Layout } from './components/Layout';
 import { ProductTypeSelection } from './components/ProductTypeSelection';
@@ -44,9 +44,29 @@ interface Inspection {
   };
 }
 
+const STORAGE_KEY = 'aql-calculator-inspections';
+
 export default function App() {
   const [selectedCalculator, setSelectedCalculator] = useState<CalculatorType>(null);
   const [inspections, setInspections] = useState<Inspection[]>([]);
+
+  // Load inspections from localStorage when the app starts
+  useEffect(() => {
+    const savedInspections = localStorage.getItem(STORAGE_KEY);
+    if (savedInspections) {
+      try {
+        setInspections(JSON.parse(savedInspections));
+      } catch (error) {
+        console.error('Error loading saved inspections:', error);
+        localStorage.removeItem(STORAGE_KEY); // Clear invalid data
+      }
+    }
+  }, []);
+
+  // Save inspections to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inspections));
+  }, [inspections]);
 
   const handleAddInspection = (inspection: Omit<Inspection, 'id'>) => {
     const newInspection = {
